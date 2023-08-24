@@ -1,4 +1,10 @@
 
+;; undo/redo madness
+(global-set-key (kbd "C-z") 'undo-only)
+(global-set-key (kbd "C-S-z") 'undo-redo)
+
+;; restart emacs
+(global-set-key (kbd "C-c q r") 'ub/restart-emacs)
 
 ;; zoom in/out/increase font
 (global-set-key (kbd "C-=") 'text-scale-increase)
@@ -6,6 +12,15 @@
 
 ;; projectile
 (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
+
+;; helpful
+;; Note that the built-in `describe-function' includes both functions
+;; and macros. `helpful-function' is functions only, so we provide
+;; `helpful-callable' as a drop-in replacement.
+(global-set-key (kbd "C-h f") #'helpful-callable)
+(global-set-key (kbd "C-h v") #'helpful-variable)
+(global-set-key (kbd "C-h k") #'helpful-key)
+(global-set-key (kbd "C-h x") #'helpful-command)
 
 ;; dired
 (global-set-key (kbd "C-c o .") 'dired-jump)
@@ -41,3 +56,24 @@
 (define-key map (kbd "s"      )  #'pdf-occur)
 (define-key map (kbd "b"      )  #'pdf-view-set-slice-from-bounding-box)
 (define-key map (kbd "r"      )  #'pdf-view-reset-slice))
+
+
+;; consult
+(require 'consult)
+(global-set-key (kbd "C-c f r") 'consult-recent-file)
+(global-set-key (kbd "C-x C-v") 'consult-buffer)
+(global-set-key (kbd "C-x C-'") 'consult-grep)
+(global-set-key (kbd "C-s") 'consult-line)
+
+
+;; python - quickrun
+(require 'quickrun)
+(with-eval-after-load 'python
+  (let ((map-var python-mode-map))
+    (define-key map-var (kbd "C-c C-s") #'quickrun-shell)
+    (define-key map-var (kbd "<tab>") 'python-indent-shift-right)
+    (define-key map-var (kbd "S-<tab>") 'python-indent-shift-left)
+    (define-key map-var [S-iso-lefttab] 'python-indent-shift-left)))
+
+
+(global-set-key (kbd "C-;") #'company-indent-or-complete-common)
