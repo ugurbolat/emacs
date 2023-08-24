@@ -57,4 +57,11 @@
   (message "flycheck is not installed so cannot hook disable flycheck to python-mode"))
 
 
-;; TODO Wilfred/pyimport
+;; pyimport: remove unused imports and add missing ones
+(straight-use-package
+ '(pyimport :type git :host github :repo "Wilfred/pyimport"))
+
+;; pytest
+(straight-use-package
+ '(emacs-python-pytest :type git :host github :repo "wbolster/emacs-python-pytest"))
+(require 'python-pytest)

@@ -73,7 +73,8 @@
     (define-key map-var (kbd "C-c C-s") #'quickrun-shell)
     (define-key map-var (kbd "<tab>") 'python-indent-shift-right)
     (define-key map-var (kbd "S-<tab>") 'python-indent-shift-left)
-    (define-key map-var [S-iso-lefttab] 'python-indent-shift-left)))
+    (define-key map-var [S-iso-lefttab] 'python-indent-shift-left)
+    (define-key map-var (kbd "C-c C-i") #'pyimport-insert-missing)))
 
 
 (global-set-key (kbd "C-;") #'company-indent-or-complete-common)
