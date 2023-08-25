@@ -74,7 +74,8 @@
     (define-key map-var (kbd "<tab>") 'python-indent-shift-right)
     (define-key map-var (kbd "S-<tab>") 'python-indent-shift-left)
     (define-key map-var [S-iso-lefttab] 'python-indent-shift-left)
-    (define-key map-var (kbd "C-c C-i") #'pyimport-insert-missing)))
+    (define-key map-var (kbd "C-c C-i") 'pyimport-insert-missing)
+    (define-key map-var (kbd "C-c C-b") 'python-black-region)))
 
 
 (global-set-key (kbd "C-;") #'company-indent-or-complete-common)

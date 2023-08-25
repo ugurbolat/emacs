@@ -65,3 +65,12 @@
 (straight-use-package
  '(emacs-python-pytest :type git :host github :repo "wbolster/emacs-python-pytest"))
 (require 'python-pytest)
+
+;; python reformat w/ black
+(straight-use-package
+ '(emacs-reformatter :type git :host github :repo "purcell/emacs-reformatter"))
+(require 'reformatter)
+(straight-use-package
+ '(emacs-python-black :type git :host github :repo "wbolster/emacs-python-black"))
+(straight-use-package
+ '(black-macchiato :type git :host github :repo "wbolster/black-macchiato"))
