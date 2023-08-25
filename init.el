@@ -57,8 +57,28 @@
 
 
 ;; margins & fringe
-(setq-default left-margin-width 2 right-margin-width 2) ; Define new widths.
-(set-window-buffer nil (current-buffer)) ; Use them now.
+;; basic
+;; (setq-default left-margin-width 10 right-margin-width 10) ; Define new widths.
+;; (set-window-buffer nil (current-buffer)) ; Use them now.
+
+;; smart conditional margins
+(defun set-window-margins-based-on-size ()
+  "Set margins width based on window size."
+  (walk-windows (lambda (window)
+                  (with-selected-window window
+                    (let* ((frame-char-width (frame-width))
+			   (window-char-width (window-width))
+			   (min-char-width (min window-char-width frame-char-width))
+                           (each-side-margin (max 1 (/ (- min-char-width 120) 2)) ))
+                      (if (>= each-side-margin 10)
+                          ;; For large window width.
+                          (setq left-margin-width 10 right-margin-width 10)
+                        ;; For small window width.
+                        (setq left-margin-width each-side-margin right-margin-width each-side-margin))
+                      (set-window-buffer window (current-buffer)))))))
+
+(add-hook 'window-configuration-change-hook #'set-window-margins-based-on-size)
+
 
 ;; TODO kills the fringes not so perfect after all...
 ;; (straight-use-package
@@ -268,7 +288,7 @@
 ;;;;;;; latex
 (load-file (expand-file-name "latex.el" ub/emacs-dir))
 
-;;;;;;; lsp and languages
+;;;;;;; lsp and languages ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; TODO not stable, especially dap-debug
 ;;(load-file (expand-file-name "lsp.el" ub/emacs-dir))
 (load-file (expand-file-name "python.el" ub/emacs-dir))
@@ -329,8 +349,20 @@
 (require 'quickrun)
 ;; TODO integrate with vterm, only eshell support for terminal
 
+;; achieving similar to eval-last-sexp for python or other interactive langs
+(straight-use-package
+ '(eval-in-repl :type git :host github :repo "kaz-yos/eval-in-repl"))
+(require 'eval-in-repl)
+(setq eir-repl-placement 'right)
 
-;;;;;;;;;; hydra
+(require 'python) ; if not done elsewhere
+(require 'eval-in-repl-python)
+(add-hook 'python-mode-hook
+          '(lambda ()
+             (local-set-key (kbd "<C-return>") 'eir-eval-in-python)))
+
+
+;;;;;;;;;; hydra ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (straight-use-package
  '(hydra :type git :host github :repo "abo-abo/hydra"))
 (load-file (expand-file-name "hydra.el" ub/emacs-dir))
