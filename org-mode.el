@@ -32,3 +32,25 @@
 ;;        ;; 			 (cdr (doom-call-process "git" "rev-parse" "--short" "HEAD")))
 ;;        ;; 		 "(provide 'org-version)\n"))
 ;;        :commit "630f86dfc42472aafd9a4f305e1965cbe92b2891"))
+
+
+(setq org-startup-with-inline-images t
+      ;;(setq org-startup-with-latex-preview t)
+      org-startup-folded nil
+      org-checkbox-hierarchical-statistics nil
+      org-tags-column 0
+      org-enforce-todo-dependencies nil
+      org-log-state-notes-into-drawer nil
+      ;;+org-startup-with-animated-gifs 't
+      org-startup-folded nil
+      org-startup-indented t
+      org-edit-src-content-indentation 0
+      org-src-tab-acts-natively t
+      org-src-fontify-natively t
+      org-confirm-babel-evaluate nil
+      org-support-shift-select nil
+      shift-select-mode nil)
+
+(setq org-list-demote-modify-bullet
+      '(("+" . "*") ("*" . "-") ("-" . "+")))
+

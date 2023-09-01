@@ -79,3 +79,7 @@
 
 
 (global-set-key (kbd "C-;") #'company-indent-or-complete-common)
+
+
+;; magit
+;;(global-set-key (kbd "C-c i") 'ub/insert-commit-prefix-w-emoji)

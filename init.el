@@ -6,6 +6,7 @@
     (setq ub/emacs-dir file-path)))
 (setq ub/emacs-dir (file-truename ub/emacs-dir))
 (load-file (expand-file-name "paths.el" ub/emacs-dir))
+(load-file (expand-file-name "credentials.el" ub/emacs-dir))
 
 ;; https://github.com/radian-software/straight.el#bootstrapping-straightel
 (defvar bootstrap-version)
@@ -21,15 +22,19 @@
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
 
+;;(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
+
 ;; use-package
 (straight-use-package 'use-package)
-;;(setq straight-use-package-by-default t)
+(use-package straight
+  :custom
+  (straight-use-package-by-default t))
 
 ;; traditional strip-down 
 (menu-bar-mode -1)
 (scroll-bar-mode -1)
 (tool-bar-mode -1)
-
+:bat:
 ;; good defaults
 (delete-selection-mode 1)
 (fset 'yes-or-no-p 'y-or-n-p)
@@ -44,17 +49,34 @@
 (setq enable-local-variables 't) ; local variables are customizations in either file or directory
 (setq scroll-step 1
       scroll-conservatively 10000) ;; better scroll: go one line up or down, not half the screen.
+(global-hl-line-mode 1) ;; horizontal current line highlight
+(setq cursor-type 'box)
 
 ;; restart emacs within emacs
+
+;;;;;; theme
+;; prot has additional themes
+(straight-use-package
+ '(modus-themes :type git :host github :repo "protesilaos/modus-themes"))
+(setq modus-themes-headings
+      (quote
+       ((1 . (variable-pitch bold 1.5))
+        (2 . (variable-pitch semibold 1.3))
+        (3 . (variable-pitch 1.2))
+        (4 . (variable-pitch 1.15))
+        (5 . (variable-pitch 1.10))
+        (6 . (variable-pitch 1.05))
+        (7 . (variable-pitch 1.04))
+        (8 . (variable-pitch 1.03))
+        (9 . (variable-pitch 1.02))
+        (t . (monochrome)))))
+(load-theme 'modus-vivendi-tinted t)
+
 (straight-use-package
  '(restart-emacs :type git :host github :repo "iqbalansari/restart-emacs"))
 
-;;;;;; theme
-(load-theme 'modus-vivendi t)
-
 ;; font
 (set-face-attribute 'default (selected-frame) :height 160)
-
 
 ;; margins & fringe
 ;; basic
@@ -79,22 +101,43 @@
 
 (add-hook 'window-configuration-change-hook #'set-window-margins-based-on-size)
 
-
-;; TODO kills the fringes not so perfect after all...
-;; (straight-use-package
-;;  '(perfect-margin :type git :host github :repo "mpwang/perfect-margin"))
-;; (require 'perfect-margin)
-;; (perfect-margin-mode 1)
-;; (setq perfect-margin-visible-width 140)
-;; (setq perfect-margin-hide-fringes nil) ;; it doesn't work..
-
 (setq fringe-mode 'default)
 (set-fringe-style (quote (12 . 8)))
 
-;; (straight-use-package
-;;  '(emacs-modern-fringes :type git :host github :repo "SpecialBomb/emacs-modern-fringes"))
-;; (modern-fringes-mode)
-;; (modern-fringes-invert-arrows)
+;; emoji: bring some life/fun into the emacs
+;; TODO github emojis are not displayed
+(straight-use-package
+ '(ht :type git :host github :repo "Wilfred/ht.el")) ;; requirements for emoji
+(straight-use-package
+ '(emacs-emojify :type git :host github :repo "iqbalansari/emacs-emojify"))
+;; search data dir on build folder but it's not copied
+(let* ((dst-dir "~/emacs-configs/emacs-vanilla/straight/build/emacs-emojify/data/")
+       (src-dir "~/emacs-configs/emacs-vanilla/straight/repos/emacs-emojify/data/"))
+  (unless (file-directory-p dst-dir)
+    (copy-directory src-dir dst-dir nil nil t)))
+;;(straight-use-package 'emacs-emojify)
+(require 'emojify)
+(add-hook 'after-init-hook #'global-emojify-mode)
+
+(straight-use-package
+ '(hl-todo :type git :host github :repo "tarsius/hl-todo"))
+(global-hl-todo-mode 1)
+(setq hl-todo-keyword-faces
+      '(("TODO" . "#ff4500")
+	("DONT" . "#70b900")
+	("NEXT" . "#b6a0ff")
+	("BUG" . "#C70039")
+	("DONE" . "#44bc44")
+	("NOTE" . "#d3b55f")
+	("HOLD" . "#c0c530")
+	("HACK" . "#d0bc00")
+	("FAIL" . "#ff8059")
+	("WORKAROUND" . "#ffcccc")
+	("FIXME" . "#ff9077")
+	("REVIEW" . "#6ae4b9")
+	("DEPRECATED" . "#bfd9ff")
+	("REF" . "#660066")))
+
 
 ;; window management
 (straight-use-package
@@ -235,14 +278,65 @@
 (add-hook 'emacs-lisp-mode-hook #'aggressive-indent-mode)
 
 ;; vterm
-;; (straight-use-package
-;;  '(emacs-libvterm :type git :host github :repo "akermu/emacs-libvterm"))
 (straight-use-package
- '(vterm :source melpa))
+ '(emacs-libvterm :type git :host github :repo "akermu/emacs-libvterm"))
+;; (straight-use-package
+;;  '(vterm :source melpa))
 
 ;; magit
 (straight-use-package
  '(magit :type git :host github :repo "magit/magit"))
+(defun ub/insert-commit-prefix-w-emoji ()
+  (interactive)
+  (let* ((string-list '(":tada: init: "
+			":construction: wip: "
+                        ":christmas-tree: christmas tree bill (torba yasa)"
+			":bookmark: tag: "
+			":sparkles: feat: "
+			":bug: fix: "
+			":books: docs: "
+			":lipstick: style: "
+			":hammer: refactor: "
+			":rotating_light: test: "
+			":smiling-imp: customize:"
+			":wrench: chore:"
+			":ok_hand: review: "
+			":card_index: meta: "
+			;;":bulb: source: "
+			":racehorse: perf: "
+			":white_check_mark: addTest: "
+			":heavy_check_mark: passTest: "
+			":zap: update: "
+			":art: fmt: "
+			":fire: remove: "
+			":truck: move: "
+			":green_heart: ci: "
+			":lock: sec: "
+			":arrow_up: upDep: "
+			":arrow_down: downDep: "
+			":shirt: lint: "
+			;;":alien: i18n: "
+			;;":pencil: txt: "
+			":ambulance: hotfix: "
+			":rocket: deploy: "
+			":apple: fixMac: "
+			":penguin: fixLinux: "
+			":checkered_flag: fixWin: "
+			":construction_worker: ciBuild: "
+			":chart_with_upwards_trend: analytics: "
+			":heavy_minus_sign: removeDep: "
+			":heavy_plus_sign: addDep: "
+			":whale: docker: "
+			;;":wrench: config: "
+			;;":package: pkgJson: "
+			":twisted_rightwards_arrows: merge: "
+			":hankey: badCode: "
+			":rewind: revert: "
+			":boom: breaking: "
+			;;":wheelchair: a11y: "
+			))
+         (selected-string (completing-read "Select a string: " string-list)))
+    (insert selected-string)))
 
 
 ;; pdf-tools
@@ -278,6 +372,47 @@
 (setq company-idle-delay nil)
 (setq company-minimum-prefix-length 1)
 
+;; M-up M-down for drag up/down line regularly
+(straight-use-package
+ '(drag-stuff :type git :host github :repo "rejeep/drag-stuff.el"))
+(require 'drag-stuff)
+(drag-stuff-global-mode 1)
+(drag-stuff-define-keys)
+
+
+;; doom's +popup extracted as a package
+;; "Tame sudden yet inevitable temporary windows"
+(straight-use-package
+ '(emacs-hide-mode-line :type git :host github :repo "hlissner/emacs-hide-mode-line"))
+(require 'hide-mode-line)
+;; (straight-use-package
+;;  '(emacs-popup-mode :type git :host github :repo "aaronjensen/emacs-popup-mode"))
+(use-package popup-mode
+  ;;:demand t
+  :straight (popup-mode :host github :repo "aaronjensen/emacs-popup-mode")
+  :hook (after-init . +popup-mode)
+
+  :bind (("C-`" . +popup/toggle))
+  :config
+  (set-popup-rules! '(("^\\*Process List\\*$"
+                       :side bottom :select t :slot -1 :vslot -1 :size +popup-shrink-to-fit)
+                      ("^\\*Buffer List\\*$"
+                       :side bottom :select t :slot -1 :vslot -1 :size +popup-shrink-to-fit)
+		      ("^\\*vterm" :size 0.25 :vslot -4 :select t :quit nil :ttl 0)
+		      ("^\\*eshell" :size 0.25 :vslot -4 :select t :quit nil :ttl 0)
+		      ("^\\*quickrun" :select nil :slot -1 :vslot -1 :size 0.3 :ttl 0)
+		      ("^\\*xref"
+		       :side bottom :select t :slot -1 :vslot -1 :size +popup-shrink-to-fit)
+		      ("^\\*ielm"
+		       :side bottom :select t :slot -1 :vslot -1 :height 0.25 :quit nil :ttl nil)
+		      ("^\\*Python"
+		       :side right :select t :slot -1 :vslot -1 :width 0.5 :quit nil :ttl nil)
+                      ("^\\*Messages\\*$"
+                       :side bottom :select t :slot -1 :vslot -1 :height 0.3 :ttl nil)
+		      )))
+
+;; TODO fails to re-open last popup after toggling always opens the message...
+
 ;;;;;;;;;;;;;; search engines ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (load-file (expand-file-name "search-engines.el" ub/emacs-dir))
 
@@ -303,6 +438,10 @@
 
 ;; setting same face w/ eglot highlight
 (custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
  '(eglot-highlight-symbol-face ((t (:foreground "#ffffff" :background "#10387c")))))
 
 ;; TODO doesn't work
@@ -328,10 +467,13 @@
   (message "pyvenv is not installed so cannot hook eglot to pyvenv"))
 
 ;; debugger
-(straight-use-package
- '(realgud :type git :host github :repo "realgud/realgud"))
-(require 'realgud)
-(setq realgud-safe-mode nil)
+(use-package popup-mode
+  ;;:demand t
+  :straight (realgud :type git :host github :repo "realgud/realgud")
+  :config
+  (setq realgud-safe-mode nil))
+;;(require 'realgud)
+;;(setq realgud-safe-mode nil)
 ;; TODO currently cannot activate tab completion...
 ;; (straight-use-package
 ;;  '(realgud-ipdb :type git :host github :repo "realgud/realgud-ipdb"))
@@ -361,6 +503,11 @@
           '(lambda ()
              (local-set-key (kbd "<C-return>") 'eir-eval-in-python)))
 
+;; yasnippet
+(straight-use-package
+ '(yasnippet :type git :host github :repo "joaotavora/yasnippet"))
+(require 'yasnippet)
+(yas-global-mode 1)
 
 ;;;;;;;;;; hydra ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (straight-use-package
@@ -370,6 +517,16 @@
 ;;;;;;;;;; doom goodies
 (load-file (expand-file-name "doom-goodies.el" ub/emacs-dir))
 
+;;;;;;;;;; gpt, etc.
+(load-file (expand-file-name "llm.el" ub/emacs-dir))
+
 ;;;;;;;;;;; keybindings
 (load-file (expand-file-name "keybindings.el" ub/emacs-dir))
 
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(custom-safe-themes
+   '("4b026ac68a1aa4d1a91879b64f54c2490b4ecad8b64de5b1865bca0addd053d9" default)))
